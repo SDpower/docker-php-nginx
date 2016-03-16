@@ -1,5 +1,5 @@
-FROM phusion/baseimage:0.9.16
-MAINTAINER Harsh Vakharia <harshjv@gmail.com>
+FROM phusion/baseimage:latest
+MAINTAINER Steve Lo <info@sd.idv.tw>
 
 # Default baseimage settings
 ENV HOME /root
@@ -8,11 +8,15 @@ CMD ["/sbin/my_init"]
 ENV DEBIAN_FRONTEND noninteractive
 
 # Update software list, install php-nginx & clear cache
-RUN apt-get update && \
-    apt-get install -y --force-yes nginx \
-    php5-fpm php5-cli php5-mysql php5-mcrypt \
-    php5-curl php5-gd php5-intl && \
-    apt-get clean && \
+RUN apt-get -qy update && apt-get -qy upgrade && locale-gen en_US.UTF-8 && export LANG=en_US.UTF-8 && \
+	apt-get -qy install nano curl software-properties-common --fix-missing && \
+	add-apt-repository -y ppa:nginx/stable && \
+	add-apt-repository ppa:ondrej/php && \
+	apt-get -qy update && apt-get -qy install nginx build-essential git zip --fix-missing && \
+	apt-get -qy --force-yes install php7.0-fpm php7.0-curl php7.0-cli php7.0-common php7.0-json php7.0-opcache \
+	php7.0-mysql php7.0-phpdbg php7.0-gd php7.0-imap php7.0-ldap php7.0-pgsql php7.0-pspell php7.0-recode \
+	php7.0-mcrypt php7.0-tidy php7.0-dev php7.0-intl php7.0-gd && \
+	apt-get clean && \
     rm -rf /var/lib/apt/lists/* \
            /tmp/* \
            /var/tmp/*
@@ -23,12 +27,11 @@ RUN sed -i "s/sendfile on/sendfile off/"                                /etc/ngi
 RUN mkdir -p                                                            /var/www
 
 # Configure PHP
-RUN sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/"                  /etc/php5/fpm/php.ini
-RUN sed -i "s/;date.timezone =.*/date.timezone = Asia\/Kolkata/"        /etc/php5/fpm/php.ini
-RUN sed -i -e "s/;daemonize\s*=\s*yes/daemonize = no/g"                 /etc/php5/fpm/php-fpm.conf
-RUN sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/"                  /etc/php5/cli/php.ini
-RUN sed -i "s/;date.timezone =.*/date.timezone = Asia\/Kolkata/"        /etc/php5/cli/php.ini
-RUN php5enmod mcrypt
+RUN sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathi nfo=0/"                 /etc/php/7.0/fpm/php.ini
+RUN sed -i "s/;date.timezone =.*/date.timezone = Asia\/Taipei/"         /etc/php/7.0/fpm/php.ini
+RUN sed -i -e "s/;daemonize\s*=\s*yes/daemonize = no/g"                 /etc/php/7.0/fpm/php-fpm.conf
+RUN sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/"                  /etc/php/7.0/cli/php.ini
+RUN sed -i "s/;date.timezone =.*/date.timezone = Asia\/Taipei/"         /etc/php/7.0/cli/php.ini
 
 # Add nginx service
 RUN mkdir                                                               /etc/service/nginx
@@ -38,6 +41,7 @@ RUN chmod +x                                                            /etc/ser
 # Add PHP service
 RUN mkdir                                                               /etc/service/phpfpm
 ADD build/php/run.sh                                                    /etc/service/phpfpm/run
+RUN mkdir -p /run/php
 RUN chmod +x                                                            /etc/service/phpfpm/run
 
 # Add nginx
